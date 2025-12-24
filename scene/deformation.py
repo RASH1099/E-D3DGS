@@ -18,7 +18,7 @@ class deform_network(nn.Module):
         self.D = D
         self.W = W
 
-        self.args = args  
+        self.args = args
         self.min_embeddings = min_embeddings
         self.max_embeddings = max_embeddings
         self.num_frames = num_frames
@@ -92,7 +92,7 @@ class deform_network(nn.Module):
 
     def deform(self, hidden, pts, scales, rotations, opacity, sh_coefs, pos_deform, scales_deform, rotations_deform, opacity_deform, rgb_deform, scale=1., scale_c=1., scale_o=1., coef_s=1.):
         dx, ds, dr, do = pos_deform(hidden), None, None, None
-        pts = pts + dx * scale 
+        pts = pts + dx * scale # 前时间的动态位置
         
         if not self.args.no_ds:
             ds = scales_deform(hidden)
@@ -111,7 +111,7 @@ class deform_network(nn.Module):
     def forward(self, point, scales=None, rotations=None, opacity=None, time_emb=None, cam_no=None, pc=None, embeddings=None, sh_coefs=None, iter=None, num_down_emb_c=30, num_down_emb_f=30):
         pts, scales, rotations, opacity = point[:, :3], scales[:,:3], rotations[:,:4], opacity[:,:1]
         pts_orig, scales_orig, rotations_orig, opacity_orig, sh_coefs_orig = pts, scales, rotations, opacity, sh_coefs
-        # 不同相机拍摄同一时刻可能有一点错位，这里学习一个 offset 把时间对齐
+        
         if type(cam_no) == type(None):
             offset = torch.masked_select(self.offsets, self.offsets.ne(0)).mean()
             offset[torch.isnan(offset)] = 0
@@ -150,7 +150,7 @@ class deform_network(nn.Module):
                 parameter_list.append(param)
         return parameter_list
 
-# 给模型中所有线性层，用 Xavier 均匀分布初始化权重
+# 初始化全连接层的权重，保证网络训练的稳定性
 def initialize_weights(m):
     if isinstance(m, nn.Linear):
         init.xavier_uniform_(m.weight,gain=1)
