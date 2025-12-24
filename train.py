@@ -26,7 +26,14 @@ from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams, ModelHiddenParams
 from utils.timer import Timer
 from utils.extra_utils import o3d_knn, weighted_l2_loss_v2, image_sampler, calculate_distances, sample_camera
-
+import debugpy
+try:
+    # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+    debugpy.listen(("localhost", 9501))
+    print("Waiting for debugger attach")
+    debugpy.wait_for_client()
+except Exception as e:
+    pass
 # import lpips
 from utils.scene_utils import render_training_image
 from time import time
@@ -37,8 +44,9 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
                          checkpoint_iterations, checkpoint, debug_from,
                          gaussians, scene, tb_writer, train_iter,timer, start_time):
     first_iter = 0
-
+    # 高斯椭球集训练设置
     gaussians.training_setup(opt)
+    # 加载 checkpoint，并恢复模型状态
     if checkpoint:
         (model_params, first_iter) = torch.load(checkpoint)
         gaussians.restore(model_params, opt)
@@ -96,12 +104,14 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
     method = None
 
     start_time = time()
+    # 开始循环迭代
     for iteration in range(first_iter, final_iter+1):             
         iter_start.record()
-
+        # 高斯椭球，更新学习率 
         gaussians.update_learning_rate(iteration)
 
         # Every 1000 its we increase the levels of SH up to a maximum degree
+        # 每1000步提升一次 SH 阶数，直到最大值
         if iteration % 1000 == 0:
             gaussians.oneupSHdegree()
 
@@ -112,7 +122,7 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
             viewpoint_cams = [viewpoint_stack[(f*2) % scene.maxtime] for f in frame_set] + \
                              [viewpoint_stack[(f*2+1) % scene.maxtime] for f in frame_set]
         else:
-            # Pick camera
+            # Pick camera “批量相机采样”（训练中动态选择多视角）
             method = "random" if iteration < opt.random_until or iteration % 2 == 1 else "by_error"
 
             cam_no = []
@@ -243,7 +253,7 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
                     render_training_image(scene, gaussians, test_cams, render, pipe, background, iteration-1,timer.get_elapsed_time())
 
             timer.start()
-            # Densification
+            # Densification自适应密度控制
             if iteration < opt.densify_until_iter :
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
@@ -264,21 +274,22 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
                     if opt.reset_opacity_ratio > 0 and iteration % opt.pruning_interval == 0:
                         gaussians.reset_opacity(opt.reset_opacity_ratio)
 
-            # Optimizer step
+            # Optimizer step 优化器更新迭代参数
             if iteration < opt.iterations:
                 gaussians.optimizer.step()
                 gaussians.optimizer.zero_grad(set_to_none = True)
-
+  
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
 
 
 def training(dataset, hyper, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from, expname):
-    tb_writer = prepare_output_and_logger(expname)
-    gaussians = GaussianModel(dataset.sh_degree, hyper)
+    tb_writer = prepare_output_and_logger(expname)# 准备输出和日志记录器
+    gaussians = GaussianModel(dataset.sh_degree, hyper) # 高斯椭球类的初始化
     dataset.model_path = args.model_path
     timer = Timer()
+    # 场景初始化colmap数据读取，高斯椭球初始化
     scene = Scene(dataset, gaussians, shuffle=dataset.shuffle, loader=dataset.loader, duration=hyper.total_num_frames, opt=opt)
     timer.start()
     
@@ -321,6 +332,7 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     parser = ArgumentParser(description="Training script parameters")
     setup_seed(6666)
+    # 模型参数 优化参数 管道参数
     lp = ModelParams(parser)
     op = OptimizationParams(parser)
     pp = PipelineParams(parser)
@@ -346,7 +358,7 @@ if __name__ == "__main__":
         args = merge_hparams(args, config)
     print("Optimizing " + args.model_path)
 
-    # Initialize system state (RNG)
+    # Initialize system state (RNG)初始化系统状态
     safe_state(args.quiet)
 
     # Start GUI server, configure and run training

@@ -30,7 +30,7 @@ class deform_network(nn.Module):
         # 创建两套网络：coarse 和 fine
         self.feature_out_c, self.pos_deform_c, self.scales_deform_c, self.rotations_deform_c, self.opacity_deform_c, self.rgb_deform_c = self.create_net()
         self.feature_out_f, self.pos_deform_f, self.scales_deform_f, self.rotations_deform_f, self.opacity_deform_f, self.rgb_deform_f = self.create_net()
-
+        # 初始化模型的一个可训练参数self.weight
         if args.zero_temporal:
             self.weight = torch.nn.Parameter(torch.zeros(max_embeddings, self.temporal_embedding_dim))
         else:
