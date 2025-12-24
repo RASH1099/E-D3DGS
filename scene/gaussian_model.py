@@ -25,7 +25,7 @@ from scene.deformation import deform_network
 
 
 class GaussianModel:
-
+    # 用于初始化各类参数的 “激活 / 变换函数”。
     def setup_functions(self):
         def build_covariance_from_scaling_rotation(scaling, scaling_modifier, rotation):
             L = build_scaling_rotation(scaling_modifier * scaling, rotation)
@@ -45,21 +45,24 @@ class GaussianModel:
 
 
     def __init__(self, sh_degree : int, args):
+        # SH 阶数初始化
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree
 
         self._xyz = torch.empty(0)
+        # 变形网络初始化 参数包括网络宽度（net_width）、深度（defor_depth）、嵌入维度范围、总帧数等（由args传入）
         self._deformation = deform_network(W=args.net_width, D=args.defor_depth, 
                                            min_embeddings=args.min_embeddings, max_embeddings=args.max_embeddings, 
                                            num_frames=args.total_num_frames,
                                            args=args)
+        # 球谐特征初始化
         self._features_dc = torch.empty(0)
         self._features_rest = torch.empty(0)
+        # 高斯点形状 / 外观参数初始化
         self._scaling = torch.empty(0)
         self._rotation = torch.empty(0)
         self._opacity = torch.empty(0)
-        self._embedding = torch.empty(0)
-
+        self._embedding = torch.empty(0) # 每高斯嵌入
         self.max_radii2D = torch.empty(0)
         self.xyz_gradient_accum = torch.empty(0)
         self.denom = torch.empty(0)
