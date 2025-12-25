@@ -41,6 +41,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         campos=viewpoint_camera.camera_center.cuda(),# 相机位置
         prefiltered=False,
         debug=pipe.debug,
+        antialiasing=False
     )
     # 把时间数字变成张量，然后放在和高斯坐标一样的设备上，这个时间复制 N 行 1 列，变成 (N,1)，让每个点都有一个对应的时间输入
     time = torch.tensor(viewpoint_camera.time).to(means3D.device).repeat(means3D.shape[0],1)
