@@ -1,6 +1,6 @@
 GPU=0
 PORT_BASE=6000
-GT_PATH=path
+GT_PATH=hypernerf
 
 DATASET=hypernerf
 SAVE_PATH=output

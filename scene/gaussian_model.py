@@ -25,7 +25,7 @@ from scene.deformation import deform_network
 
 
 class GaussianModel:
-    # 用于初始化各类参数的 “激活 / 变换函数”。
+    # 用于初始化各类参数的 “激活 / 变换函数”。把模型训练出的原始数值，转成 3D 高斯实际需要的 “形状
     def setup_functions(self):
         def build_covariance_from_scaling_rotation(scaling, scaling_modifier, rotation):
             L = build_scaling_rotation(scaling_modifier * scaling, rotation)
@@ -64,12 +64,12 @@ class GaussianModel:
         self._opacity = torch.empty(0) # 每高斯不透明度
         self._embedding = torch.empty(0) # 每高斯嵌入
         self.max_radii2D = torch.empty(0) # 每高斯最大屏幕半径
-        self.xyz_gradient_accum = torch.empty(0) # 每高斯位置梯度累积
+        self.xyz_gradient_accum = torch.empty(0) # 每高斯位置梯度累积求和
         self.denom = torch.empty(0) # 每高斯梯度累积计数器
         self.optimizer = None # Adam 优化器
         self.percent_dense = 0 # 密集化百分比
         self.spatial_lr_scale = 0  # 空间学习率缩放因子
-        self.setup_functions() # 激活 / 变换函数设置
+        self.setup_functions() # 激活 / 变换设置函数 针对尺度缩放因子和四元数矩阵
     # 方法返回一个元组，包含了实例对象的多个属性 / 状态
     def capture(self):
         return (
@@ -179,9 +179,9 @@ class GaussianModel:
     # 训练参数、优化器、学习率调度器（哪些东西被训练，学习率怎么分组）
     def training_setup(self, training_args):
         self.percent_dense = training_args.percent_dense
-        self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
+        self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")# 位置梯度
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        
+        # 学习率
         l = [
             {'params': [self._xyz], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
             {'params': list(self._deformation.get_mlp_parameters()), 'lr': training_args.deformation_lr_init * self.spatial_lr_scale, "name": "deformation"},
@@ -193,7 +193,7 @@ class GaussianModel:
             {'params': [self._rotation], 'lr': training_args.rotation_lr, "name": "rotation"},
             {'params': [self._embedding], 'lr': training_args.feature_lr, "name": "embedding"}
         ]
-
+        # 优化器
         self.optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
         self.xyz_scheduler_args = get_expon_lr_func(lr_init=training_args.position_lr_init*self.spatial_lr_scale,
                                                     lr_final=training_args.position_lr_final*self.spatial_lr_scale,
