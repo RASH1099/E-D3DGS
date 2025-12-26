@@ -157,10 +157,11 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
             render_pkg = render(viewpoint_cam, gaussians, pipe, background, cam_no=cam_no, iter=iteration, \
                 num_down_emb_c=hyper.min_embeddings, num_down_emb_f=hyper.min_embeddings)
             image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
-
+            # 把当前视角的数据放进 list
             images.append(image.unsqueeze(0))
             gt_image = viewpoint_cam.original_image.cuda()
             gt_images.append(gt_image.unsqueeze(0))
+            # 循环结束后：把多视角合并成一个 batch
             radii_list.append(radii.unsqueeze(0))
             visibility_filter_list.append(visibility_filter.unsqueeze(0))
             viewspace_point_tensor_list.append(viewspace_point_tensor)
@@ -288,7 +289,7 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
 
 def training(dataset, hyper, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from, expname):
     tb_writer = prepare_output_and_logger(expname)# 准备输出和日志记录器
-    gaussians = GaussianModel(dataset.sh_degree, hyper) # 高斯椭球类的初始化
+    gaussians = GaussianModel(dataset.sh_degree, hyper) # 高斯参数的初始化
     dataset.model_path = args.model_path
     timer = Timer()
     # 场景初始化colmap数据读取，高斯椭球初始化
