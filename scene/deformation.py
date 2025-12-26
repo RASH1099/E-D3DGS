@@ -18,7 +18,7 @@ class deform_network(nn.Module):
         self.D = D
         self.W = W
 
-        self.args = args
+        self.args = args  
         self.min_embeddings = min_embeddings
         self.max_embeddings = max_embeddings
         self.num_frames = num_frames
@@ -30,7 +30,7 @@ class deform_network(nn.Module):
         # 创建两套网络：coarse 和 fine
         self.feature_out_c, self.pos_deform_c, self.scales_deform_c, self.rotations_deform_c, self.opacity_deform_c, self.rgb_deform_c = self.create_net()
         self.feature_out_f, self.pos_deform_f, self.scales_deform_f, self.rotations_deform_f, self.opacity_deform_f, self.rgb_deform_f = self.create_net()
-        # 初始化模型的一个可训练参数self.weight
+
         if args.zero_temporal:
             self.weight = torch.nn.Parameter(torch.zeros(max_embeddings, self.temporal_embedding_dim))
         else:
@@ -67,7 +67,7 @@ class deform_network(nn.Module):
         emb = F.grid_sample(emb_resized, grid, align_corners=align_corners, mode='bilinear', padding_mode='reflection')
         emb = emb.repeat(1,1,N,1).squeeze()
 
-        return emb
+        return emb # 实现 “输入时间，输出该时间的时间嵌入特征  让每个高斯点都得到同一个 z_t
     
     def int_lininterp(self, t, init_val, final_val, until):
         return int(init_val + (final_val - init_val) * min(max(t, 0), until) / until)
@@ -77,12 +77,12 @@ class deform_network(nn.Module):
         if use_coarse_temporal_embedding:
             h = self.get_temporal_embed(t, num_down_emb)
         else:
-            if self.args.no_c2f_temporal_embedding:
+            if self.args.no_c2f_temporal_embedding: # 直接最细
                 h = self.get_temporal_embed(t, self.max_embeddings)
-            else:
+            else: # 逐步从粗到细
                 h = self.get_temporal_embed(t, self.int_lininterp(iter, num_down_emb, self.max_embeddings, self.c2f_temporal_iter))
     
-        if type(pc) == type(None):
+        if type(pc) == type(None): # 拼接 per-Gaussian embedding：z_t + z_g
             h = torch.cat([h, embeddings], dim=-1)
         else:        
             h = torch.cat([h, pc.get_embedding], dim=-1)
@@ -92,7 +92,7 @@ class deform_network(nn.Module):
 
     def deform(self, hidden, pts, scales, rotations, opacity, sh_coefs, pos_deform, scales_deform, rotations_deform, opacity_deform, rgb_deform, scale=1., scale_c=1., scale_o=1., coef_s=1.):
         dx, ds, dr, do = pos_deform(hidden), None, None, None
-        pts = pts + dx * scale # 前时间的动态位置
+        pts = pts + dx * scale 
         
         if not self.args.no_ds:
             ds = scales_deform(hidden)
@@ -111,7 +111,7 @@ class deform_network(nn.Module):
     def forward(self, point, scales=None, rotations=None, opacity=None, time_emb=None, cam_no=None, pc=None, embeddings=None, sh_coefs=None, iter=None, num_down_emb_c=30, num_down_emb_f=30):
         pts, scales, rotations, opacity = point[:, :3], scales[:,:3], rotations[:,:4], opacity[:,:1]
         pts_orig, scales_orig, rotations_orig, opacity_orig, sh_coefs_orig = pts, scales, rotations, opacity, sh_coefs
-        
+        # 不同相机拍摄同一时刻可能有一点错位，这里学习一个 offset 把时间对齐
         if type(cam_no) == type(None):
             offset = torch.masked_select(self.offsets, self.offsets.ne(0)).mean()
             offset[torch.isnan(offset)] = 0
@@ -142,7 +142,7 @@ class deform_network(nn.Module):
         return pts, scales, rotations, opacity, sh_coefs, \
             ((pts_sub, scales_sub, rotations_sub, opacity_sub, sh_coefs_sub), \
             (pts_orig, scales_orig, rotations_orig, opacity_orig, sh_coefs_orig))
-    
+
     def get_mlp_parameters(self):
         parameter_list = []
         for name, param in self.named_parameters():
@@ -150,7 +150,7 @@ class deform_network(nn.Module):
                 parameter_list.append(param)
         return parameter_list
 
-# 初始化全连接层的权重，保证网络训练的稳定性
+# 给模型中所有线性层，用 Xavier 均匀分布初始化权重
 def initialize_weights(m):
     if isinstance(m, nn.Linear):
         init.xavier_uniform_(m.weight,gain=1)

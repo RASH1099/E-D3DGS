@@ -12,8 +12,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     Background tensor (bg_color) must be on GPU!
     """
  
-    # Create zero tensor. We will use it to make pytorch return gradients of the 2D (screen-space) means
-    # 创建一个张量，计算2D屏幕坐标 形状与pc.get_xyz相同
+    # Create zero tensor. We will use it to make pytorch return gradients of the 2D (screen-space) means这是一个“为了拿到某些梯度信息”而放的假变量，不是模型参数。
     screenspace_points = torch.zeros_like(pc.get_xyz, dtype=pc.get_xyz.dtype, requires_grad=True, device="cuda") + 0
     try:
         screenspace_points.retain_grad()
@@ -22,66 +21,61 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
 
     # Set up rasterization configuration
     
-    means3D = pc.get_xyz 
-    # if cam_type != "PanopticSports":
-    # 获取 相机的水平视角的半正切值 和 垂直视角的半正切值 用来计算投影矩阵
+    means3D = pc.get_xyz
+    # if cam_type != "PanopticSports":用于 rasterizer 做投影
     tanfovx = math.tan(viewpoint_camera.FoVx * 0.5)
     tanfovy = math.tan(viewpoint_camera.FoVy * 0.5)
-    # 高斯体素光栅化设置（传到可微光栅化渲染器里面）
-    raster_settings = GaussianRasterizationSettings(
-        image_height=torch.tensor(viewpoint_camera.image_height).cuda(), # 图像高度
-        image_width=torch.tensor(viewpoint_camera.image_width).cuda(), # 图像宽度
-        tanfovx=torch.tensor(tanfovx).cuda(), # 
+    raster_settings = GaussianRasterizationSettings(# 把相机参数打包成 rasterizer 配置
+        image_height=torch.tensor(viewpoint_camera.image_height).cuda(),
+        image_width=torch.tensor(viewpoint_camera.image_width).cuda(),
+        tanfovx=torch.tensor(tanfovx).cuda(),
         tanfovy=torch.tensor(tanfovy).cuda(),
-        bg=bg_color.cuda(), # 背景颜色
-        scale_modifier=torch.tensor(scaling_modifier).cuda(),# 缩放因子
-        viewmatrix=viewpoint_camera.world_view_transform.cuda(),# 视图矩阵（世界到相机）
-        projmatrix=viewpoint_camera.full_proj_transform.cuda(),# 投影矩阵（世界到像素）
-        sh_degree=torch.tensor(pc.active_sh_degree).cuda(),# 已激活的球谐函数阶数
-        campos=viewpoint_camera.camera_center.cuda(),# 相机位置
+        bg=bg_color.cuda(),
+        scale_modifier=torch.tensor(scaling_modifier).cuda(),
+        viewmatrix=viewpoint_camera.world_view_transform.cuda(),
+        projmatrix=viewpoint_camera.full_proj_transform.cuda(),
+        sh_degree=torch.tensor(pc.active_sh_degree).cuda(),
+        campos=viewpoint_camera.camera_center.cuda(),
         prefiltered=False,
         debug=pipe.debug,
-        antialiasing=False
     )
-    # 把时间数字变成张量，然后放在和高斯坐标一样的设备上，这个时间复制 N 行 1 列，变成 (N,1)，让每个点都有一个对应的时间输入
+    # 这一帧的所有点都在同一时刻 t，所以时间向量对所有点一样，只是为了形状对齐复制 N 份。
     time = torch.tensor(viewpoint_camera.time).to(means3D.device).repeat(means3D.shape[0],1)
   
     # else:
     #     raster_settings = viewpoint_camera['camera']
     #     time=torch.tensor(viewpoint_camera['time']).to(means3D.device).repeat(means3D.shape[0],1)
         
-    # 光栅化实例
+
     rasterizer = GaussianRasterizer(raster_settings=raster_settings)
 
     # means3D = pc.get_xyz
     # add deformation to each points
     # deformation = pc.get_deformation
 
-    # 2D屏幕坐标（高斯体素投影到图像平面上的坐标）
+    
     means2D = screenspace_points
     opacity = pc._opacity
     shs = pc.get_features
 
     # If precomputed 3d covariance is provided, use it. If not, then it will be computed from
     # scaling / rotation by the rasterizer.
-    # 是否提前计算3D协方差矩阵
     scales = None
     rotations = None
     cov3D_precomp = None
-    if pipe.compute_cov3D_python:# false不执行
-        # 预计算3D协方差矩阵
+    if pipe.compute_cov3D_python:
         cov3D_precomp = pc.get_covariance(scaling_modifier)
     else:
         scales = pc._scaling
         rotations = pc._rotation
-
+##############################################################################################
     means3D_final, scales_final, rotations_final, opacity_final, shs_final, extras = pc._deformation(means3D, scales, 
         rotations, opacity, time, cam_no, pc, None, shs, iter=iter, num_down_emb_c=num_down_emb_c, num_down_emb_f=num_down_emb_f)
-
+    # 把 deformation 输出“激活到合法空间”
     scales_final = pc.scaling_activation(scales_final)
     rotations_final = pc.rotation_activation(rotations_final)
     opacity = pc.opacity_activation(opacity_final)
-    # 是否使用预计算颜色（使用球谐函数系数去计算rgb）
+    # 将球谐系数转换为像素颜色
     colors_precomp = None
     if override_color is None:
         if pipe.convert_SHs_python:
@@ -98,16 +92,16 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # Rasterize visible Gaussians to image, obtain their radii (on screen). 
     # time3 = get_time()
     depth = None
-    # 光栅化渲染图片
     outputs = rasterizer(
-        means3D = means3D_final,# 3D 坐标
-        means2D = means2D,# 2D 屏幕坐标
-        shs = shs_final,# 球谐函数系数
-        colors_precomp = colors_precomp,# 预计算颜色值
-        opacities = opacity,# 不透明度
-        scales = scales_final,# 尺度缩放因子
-        rotations = rotations_final, # 旋转矩阵
-        cov3D_precomp = cov3D_precomp)# 预计算三维协方差矩阵
+        means3D = means3D_final,
+        means2D = means2D,
+        shs = shs_final,
+        colors_precomp = colors_precomp,
+        opacities = opacity,
+        scales = scales_final,
+        rotations = rotations_final,
+        cov3D_precomp = cov3D_precomp)
+    # 处理 rasterizer 的返回
     if len(outputs) == 2:
         rendered_image, radii = outputs
     elif len(outputs) == 3:
@@ -121,10 +115,10 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # They will be excluded from value updates used in the splitting criteria.
 
 
-    return {"render": rendered_image, # 渲染后的图像
-            "viewspace_points": screenspace_points,#  高斯在屏幕空间的坐标
+    return {"render": rendered_image,
+            "viewspace_points": screenspace_points,
             "visibility_filter" : radii > 0,
-            "radii": radii,# 每个高斯体素在图像平面上的半径
-            "depth":depth, # 深度图
-            "sh_coefs_final": shs_final,# 高斯球谐函数系数
+            "radii": radii,
+            "depth":depth,
+            "sh_coefs_final": shs_final,
             "extras":extras,}
