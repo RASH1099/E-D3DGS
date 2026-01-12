@@ -38,6 +38,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         campos=viewpoint_camera.camera_center.cuda(),
         prefiltered=False,
         debug=pipe.debug,
+        antialiasing=False,
     )
     # 这一帧的所有点都在同一时刻 t，所以时间向量对所有点一样，只是为了形状对齐复制 N 份。
     time = torch.tensor(viewpoint_camera.time).to(means3D.device).repeat(means3D.shape[0],1)

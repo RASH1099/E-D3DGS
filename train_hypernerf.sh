@@ -6,9 +6,9 @@ DATASET=hypernerf
 SAVE_PATH=output
 
 SCENE_LIST=(
-    # vrig-3dprinter
+    vrig-3dprinter
     # vrig-broom
-    vrig-chicken
+    # vrig-chicken
     # vrig-peel-banana
 )
 for SCENE in "${SCENE_LIST[@]}"; do
