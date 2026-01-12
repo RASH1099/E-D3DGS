@@ -34,8 +34,8 @@ def estimate_normals_pca(xyz: np.ndarray, k: int = 20) -> np.ndarray:
     try:
         from scipy.spatial import cKDTree  # type: ignore
         tree = cKDTree(xyz)
-        _, idx = tree.query(xyz, k=k + 1)  # includes itself at idx[:,0]
-        nbr_idx = idx[:, 1:]
+        _, idx = tree.query(xyz, k=k + 1)  # includes itself at idx[:,0]  
+        nbr_idx = idx[:, 1:] 
     except Exception:
         # Brute force KNN (O(N^2)) - OK for ~2k points
         d2 = np.sum((xyz[:, None, :] - xyz[None, :, :]) ** 2, axis=-1)
