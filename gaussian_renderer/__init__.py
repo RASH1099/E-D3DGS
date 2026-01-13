@@ -12,7 +12,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     Background tensor (bg_color) must be on GPU!
     """
  
-    # Create zero tensor. We will use it to make pytorch return gradients of the 2D (screen-space) means
+    # Create zero tensor. We will use it to make pytorch return gradients of the 2D (screen-space) means这是一个“为了拿到某些梯度信息”而放的假变量，不是模型参数。
     screenspace_points = torch.zeros_like(pc.get_xyz, dtype=pc.get_xyz.dtype, requires_grad=True, device="cuda") + 0
     try:
         screenspace_points.retain_grad()
@@ -22,10 +22,10 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # Set up rasterization configuration
     
     means3D = pc.get_xyz
-    # if cam_type != "PanopticSports":
+    # if cam_type != "PanopticSports":用于 rasterizer 做投影
     tanfovx = math.tan(viewpoint_camera.FoVx * 0.5)
     tanfovy = math.tan(viewpoint_camera.FoVy * 0.5)
-    raster_settings = GaussianRasterizationSettings(
+    raster_settings = GaussianRasterizationSettings(# 把相机参数打包成 rasterizer 配置
         image_height=torch.tensor(viewpoint_camera.image_height).cuda(),
         image_width=torch.tensor(viewpoint_camera.image_width).cuda(),
         tanfovx=torch.tensor(tanfovx).cuda(),
@@ -40,6 +40,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         debug=pipe.debug,
         antialiasing=False,
     )
+    # 这一帧的所有点都在同一时刻 t，所以时间向量对所有点一样，只是为了形状对齐复制 N 份。
     time = torch.tensor(viewpoint_camera.time).to(means3D.device).repeat(means3D.shape[0],1)
   
     # else:
@@ -68,13 +69,14 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     else:
         scales = pc._scaling
         rotations = pc._rotation
-
+##############################################################################################
     means3D_final, scales_final, rotations_final, opacity_final, shs_final, extras = pc._deformation(means3D, scales, 
         rotations, opacity, time, cam_no, pc, None, shs, iter=iter, num_down_emb_c=num_down_emb_c, num_down_emb_f=num_down_emb_f)
-
+    # 把 deformation 输出“激活到合法空间”
     scales_final = pc.scaling_activation(scales_final)
     rotations_final = pc.rotation_activation(rotations_final)
     opacity = pc.opacity_activation(opacity_final)
+    # 将球谐系数转换为像素颜色
     colors_precomp = None
     if override_color is None:
         if pipe.convert_SHs_python:
@@ -100,6 +102,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         scales = scales_final,
         rotations = rotations_final,
         cov3D_precomp = cov3D_precomp)
+    # 处理 rasterizer 的返回
     if len(outputs) == 2:
         rendered_image, radii = outputs
     elif len(outputs) == 3:

@@ -25,7 +25,7 @@ from scene.deformation import deform_network
 
 
 class GaussianModel:
-
+    # 用于初始化各类参数的 “激活 / 变换函数”。把模型训练出的原始数值，转成 3D 高斯实际需要的 “形状
     def setup_functions(self):
         def build_covariance_from_scaling_rotation(scaling, scaling_modifier, rotation):
             L = build_scaling_rotation(scaling_modifier * scaling, rotation)
@@ -45,29 +45,32 @@ class GaussianModel:
 
 
     def __init__(self, sh_degree : int, args):
+        # SH 阶数初始化
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree
 
         self._xyz = torch.empty(0)
+        # 变形网络初始化 参数包括网络宽度（net_width）、深度（defor_depth）、嵌入维度范围、总帧数等（由args传入）
         self._deformation = deform_network(W=args.net_width, D=args.defor_depth, 
                                            min_embeddings=args.min_embeddings, max_embeddings=args.max_embeddings, 
                                            num_frames=args.total_num_frames,
-                                           args=args)
+                                           args=args) # 变形网络实例化
+        # 球谐特征初始化
         self._features_dc = torch.empty(0)
         self._features_rest = torch.empty(0)
-        self._scaling = torch.empty(0)
-        self._rotation = torch.empty(0)
-        self._opacity = torch.empty(0)
-        self._embedding = torch.empty(0)
-
-        self.max_radii2D = torch.empty(0)
-        self.xyz_gradient_accum = torch.empty(0)
-        self.denom = torch.empty(0)
-        self.optimizer = None
-        self.percent_dense = 0
-        self.spatial_lr_scale = 0
-        self.setup_functions()
-
+        # 高斯点形状 / 外观参数初始化
+        self._scaling = torch.empty(0) # 每高斯缩放
+        self._rotation = torch.empty(0) # 每高斯旋转
+        self._opacity = torch.empty(0) # 每高斯不透明度
+        self._embedding = torch.empty(0) # 每高斯嵌入
+        self.max_radii2D = torch.empty(0) # 每高斯最大屏幕半径
+        self.xyz_gradient_accum = torch.empty(0) # 每高斯位置梯度累积求和
+        self.denom = torch.empty(0) # 每高斯梯度累积计数器
+        self.optimizer = None # Adam 优化器
+        self.percent_dense = 0 # 密集化百分比
+        self.spatial_lr_scale = 0  # 空间学习率缩放因子
+        self.setup_functions() # 激活 / 变换设置函数 针对尺度缩放因子和四元数矩阵
+    # 方法返回一个元组，包含了实例对象的多个属性 / 状态
     def capture(self):
         return (
             self.active_sh_degree,
@@ -85,7 +88,7 @@ class GaussianModel:
             self.optimizer.state_dict(),
             self.spatial_lr_scale,
         )
-    
+    # 从 checkpoint 恢复
     def restore(self, model_args, training_args):
         (self.active_sh_degree, 
         self._xyz, 
@@ -143,7 +146,7 @@ class GaussianModel:
     def oneupSHdegree(self):
         if self.active_sh_degree < self.max_sh_degree:
             self.active_sh_degree += 1
-
+    # 初始化高斯（从点云创建“第一批点”）
     def create_from_pcd(self, pcd : BasicPointCloud, spatial_lr_scale : float, time_line: int):
         self.spatial_lr_scale = spatial_lr_scale
         fused_point_cloud = torch.tensor(np.asarray(pcd.points)).float().cuda()
@@ -173,12 +176,12 @@ class GaussianModel:
         self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self._embedding = nn.Parameter(embedding.requires_grad_(True))  # [jm]
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
-
+    # 训练参数、优化器、学习率调度器（哪些东西被训练，学习率怎么分组）
     def training_setup(self, training_args):
         self.percent_dense = training_args.percent_dense
-        self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
+        self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")# 位置梯度
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
-        
+        # 学习率
         l = [
             {'params': [self._xyz], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
             {'params': list(self._deformation.get_mlp_parameters()), 'lr': training_args.deformation_lr_init * self.spatial_lr_scale, "name": "deformation"},
@@ -190,7 +193,7 @@ class GaussianModel:
             {'params': [self._rotation], 'lr': training_args.rotation_lr, "name": "rotation"},
             {'params': [self._embedding], 'lr': training_args.feature_lr, "name": "embedding"}
         ]
-
+        # 优化器
         self.optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
         self.xyz_scheduler_args = get_expon_lr_func(lr_init=training_args.position_lr_init*self.spatial_lr_scale,
                                                     lr_final=training_args.position_lr_final*self.spatial_lr_scale,
@@ -469,10 +472,10 @@ class GaussianModel:
     def densify(self, max_grad, min_opacity, extent, max_screen_size):
         grads = self.xyz_gradient_accum / self.denom
         grads[grads.isnan()] = 0.0
-
+        # 算平均梯度，再走 clone 和 split
         self.densify_and_clone(grads, max_grad, extent)
         self.densify_and_split(grads, max_grad, extent)
-
+    # # 累积“屏幕空间梯度”作为 densify 信号
     def add_densification_stats(self, viewspace_point_tensor, update_filter):
         self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor[update_filter,:2], dim=-1, keepdim=True)
         self.denom[update_filter] += 1
