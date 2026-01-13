@@ -11,9 +11,18 @@ def o3d_knn(pts, num_knn):
     pcd_tree = o3d.geometry.KDTreeFlann(pcd)
     for p in pcd.points:
         [_, i, d] = pcd_tree.search_knn_vector_3d(p, num_knn + 1)
-        indices.append(i[1:])
-        sq_dists.append(d[1:])
-    return np.array(sq_dists), np.array(indices)
+        i = np.asarray(i[1:], dtype=np.int32)
+        d = np.asarray(d[1:], dtype=np.float64)
+
+        if len(i) < num_knn:
+            pad = num_knn - len(i)
+            i = np.pad(i, (0, pad), constant_values=0)
+            d = np.pad(d, (0, pad), constant_values=0.0)
+
+        indices.append(i)
+        sq_dists.append(d)
+
+    return np.stack(sq_dists, axis=0), np.stack(indices, axis=0)
 
 
 def weighted_l2_loss_v2(x, y, w):

@@ -109,7 +109,7 @@ class Load_hyper_data(Dataset):
         self.all_img_origin = self.all_img
         self.all_depth = [f'{datadir}/depth/{int(1/ratio)}x/{i}.npy' for i in self.all_img]
 
-        self.all_img = [f'{datadir}/rgb/{int(1/ratio)}x/{i}.png' for i in self.all_img]
+        self.all_img = [f'{datadir}/images/{int(1/ratio)}x/{i}.png' for i in self.all_img]
 
         self.h, self.w = self.all_cam_params[0].image_shape
         self.map = {}

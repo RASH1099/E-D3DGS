@@ -14,7 +14,7 @@ import sys
 from PIL import Image
 from typing import NamedTuple
 from scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec2rotmat, \
-    read_extrinsics_binary, read_intrinsics_binary
+    read_extrinsics_binary, read_intrinsics_binary, read_points3D_binary, read_points3D_text
 from scene.hyper_loader import Load_hyper_data, format_hyper_data
 import copy
 from utils.graphics_utils import getWorld2View2, focal2fov
@@ -290,7 +290,7 @@ def readColmapSceneInfoDynerf(path, images, eval, duration=300, testonly=None):
         assert testname not in sanitycheck
 
     nerf_normalization = getNerfppNorm(train_cam_infos)
-    ply_path = os.path.join(path, "points3D_downsample.ply")
+    ply_path = os.path.join(path, "points3D.ply")
     
     if not testonly:
         try:
@@ -349,7 +349,7 @@ def readColmapSceneInfoTechnicolor(path, images, eval, duration=None, testonly=N
 
     nerf_normalization = getNerfppNorm(train_cam_infos)
 
-    ply_path = os.path.join(path, "points3D_downsample.ply")
+    ply_path = os.path.join(path, "points3D.ply")
     if not testonly:
         try:
             pcd = fetchPly(ply_path)
@@ -380,7 +380,16 @@ def readHyperDataInfos(datadir,use_bg_points, eval, startime=0, duration=None):
 
     nerf_normalization = getNerfppNorm(train_cam)
 
-    ply_path = os.path.join(datadir, "points3D_downsample.ply")
+    ply_path = os.path.join(datadir, "points3D.ply")
+    bin_path = os.path.join(datadir, "points3D.bin")
+    txt_path = os.path.join(datadir, "points3D.txt")
+    if not os.path.exists(ply_path):
+        print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
+        try:
+            xyz, rgb, _ = read_points3D_binary(bin_path)
+        except:
+            xyz, rgb, _ = read_points3D_text(txt_path)
+        storePly(ply_path, xyz, rgb)        
     pcd = fetchPly(ply_path)
     xyz = np.array(pcd.points)
     pcd = pcd._replace(points=xyz)

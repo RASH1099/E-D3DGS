@@ -38,6 +38,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         campos=viewpoint_camera.camera_center.cuda(),
         prefiltered=False,
         debug=pipe.debug,
+        antialiasing=False,
     )
     time = torch.tensor(viewpoint_camera.time).to(means3D.device).repeat(means3D.shape[0],1)
   

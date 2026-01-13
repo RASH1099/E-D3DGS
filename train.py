@@ -186,7 +186,7 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
             neighbor_indices = torch.tensor(neighbor_indices).cuda().long().contiguous()
             neighbor_weight = torch.tensor(neighbor_weight).cuda().float().contiguous()
             prev_num_pts = gaussians._xyz.shape[0]
-        
+            
         emb = gaussians._embedding[:,None,:].repeat(1,20,1)
         emb_knn = gaussians._embedding[neighbor_indices]
         loss += opt.reg_coef * weighted_l2_loss_v2(emb, emb_knn, neighbor_weight)
