@@ -26,7 +26,14 @@ from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams, ModelHiddenParams
 from utils.timer import Timer
 from utils.extra_utils import o3d_knn, weighted_l2_loss_v2, image_sampler, calculate_distances, sample_camera
-
+import debugpy
+# try:
+#     # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+#     debugpy.listen(("localhost", 9501))
+#     print("Waiting for debugger attach")
+#     debugpy.wait_for_client()
+# except Exception as e:
+#     pass
 # import lpips
 from utils.scene_utils import render_training_image
 from time import time
@@ -37,15 +44,16 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
                          checkpoint_iterations, checkpoint, debug_from,
                          gaussians, scene, tb_writer, train_iter,timer, start_time):
     first_iter = 0
-
+    # 高斯椭球集训练设置
     gaussians.training_setup(opt)
+    # 断点续训
     if checkpoint:
         (model_params, first_iter) = torch.load(checkpoint)
         gaussians.restore(model_params, opt)
-
+    # 设置背景颜色
     bg_color = [1, 1, 1] if dataset.white_background else [0, 0, 0]
     background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
-
+    # 测量GPU计算时间
     iter_start = torch.cuda.Event(enable_timing = True)
     iter_end = torch.cuda.Event(enable_timing = True)
 
@@ -53,7 +61,7 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
     ema_psnr_for_log = 0.0
 
     final_iter = train_iter
-    
+    # 设置进度条
     progress_bar = tqdm(range(first_iter, final_iter), desc="Training progress")
     first_iter += 1
 
@@ -96,12 +104,14 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
     method = None
 
     start_time = time()
+    # 函数循环主体代码
     for iteration in range(first_iter, final_iter+1):             
         iter_start.record()
-
+        # 高斯椭球，更新学习率 
         gaussians.update_learning_rate(iteration)
 
         # Every 1000 its we increase the levels of SH up to a maximum degree
+        # 每1000步提升一次 SH 阶数，直到最大值
         if iteration % 1000 == 0:
             gaussians.oneupSHdegree()
 
@@ -112,7 +122,7 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
             viewpoint_cams = [viewpoint_stack[(f*2) % scene.maxtime] for f in frame_set] + \
                              [viewpoint_stack[(f*2+1) % scene.maxtime] for f in frame_set]
         else:
-            # Pick camera
+            # Pick camera “批量相机采样”（训练中动态选择多视角）
             method = "random" if iteration < opt.random_until or iteration % 2 == 1 else "by_error"
 
             cam_no = []
@@ -147,10 +157,11 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
             render_pkg = render(viewpoint_cam, gaussians, pipe, background, cam_no=cam_no, iter=iteration, \
                 num_down_emb_c=hyper.min_embeddings, num_down_emb_f=hyper.min_embeddings)
             image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
-
+            # 把当前视角的数据放进 list
             images.append(image.unsqueeze(0))
             gt_image = viewpoint_cam.original_image.cuda()
             gt_images.append(gt_image.unsqueeze(0))
+            # 循环结束后：把多视角合并成一个 batch
             radii_list.append(radii.unsqueeze(0))
             visibility_filter_list.append(visibility_filter.unsqueeze(0))
             viewspace_point_tensor_list.append(viewspace_point_tensor)
@@ -170,28 +181,28 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
             loss = Ll1 + opt.lambda_dssim * Lssim
         else:
             loss = Ll1
-
+        # 计算指标
         psnr_ = psnr(image_tensor, gt_image_tensor).mean().double()
         for i in range(len(Ll1_items)):
             loss_list[cam_no_list[i], frame_no_list[i]] = Ll1_items[i].item()
 
-        # use l1 instead of opacity reset
+        # use l1 instead of opacity reset）opacity 正则
         if opt.opacity_l1_coef_fine > 0.:
             loss += opt.opacity_l1_coef_fine * torch.sigmoid(gaussians._opacity.mean())
 
-        # embedding reg using knn (https://github.com/JonathonLuiten/Dynamic3DGaussians)
+        # embedding reg using knn (https://github.com/JonathonLuiten/Dynamic3DGaussians) embedding 的 KNN 局部平滑正则
         if prev_num_pts != gaussians._xyz.shape[0]:
             neighbor_sq_dist, neighbor_indices = o3d_knn(gaussians._xyz.detach().cpu().numpy(), 20)
             neighbor_weight = np.exp(-2000 * neighbor_sq_dist)
             neighbor_indices = torch.tensor(neighbor_indices).cuda().long().contiguous()
             neighbor_weight = torch.tensor(neighbor_weight).cuda().float().contiguous()
             prev_num_pts = gaussians._xyz.shape[0]
-            
+        # 构造 emb 与 emb_knn（形状对齐）
         emb = gaussians._embedding[:,None,:].repeat(1,20,1)
         emb_knn = gaussians._embedding[neighbor_indices]
         loss += opt.reg_coef * weighted_l2_loss_v2(emb, emb_knn, neighbor_weight)
 
-        # smoothness reg on temporal embeddings
+        # smoothness reg on temporal embeddings  temporal embedding 平滑正则
         if opt.coef_tv_temporal_embedding > 0:
             weights = gaussians._deformation.weight
             N, C = weights.shape
@@ -201,6 +212,7 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
 
         
         loss.backward()
+        # 把多视角的屏幕空间梯度汇总成 densify 信号；记录训练耗时；并用 EMA 平滑更新进度条日志（loss/psnr/点数）
         viewspace_point_tensor_grad = torch.zeros_like(viewspace_point_tensor)
         for idx in range(0, len(viewspace_point_tensor_list)):
             viewspace_point_tensor_grad = viewspace_point_tensor_grad + viewspace_point_tensor_list[idx].grad
@@ -230,21 +242,22 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
 
             # Log and save
             timer.pause()
- 
+            # 保存高斯模型
             if (iteration in saving_iterations):
                 print("\n[ITER {}] Saving Gaussians".format(iteration))
                 scene.save(iteration)
             if dataset.render_process:
+                #  # 分阶段设置“渲染图像的迭代间隔”
                 if (iteration < 1000 and iteration % 10 == 1) \
                     or (iteration < 3000 and iteration % 50 == 1) \
                         or (iteration < 10000 and iteration %  100 == 1) \
                             or (iteration < 60000 and iteration % 100 ==1):
-
+                    # 调用渲染函数，生成训练过程的可视化图像
                     render_training_image(scene, gaussians, test_cams, render, pipe, background, iteration-1,timer.get_elapsed_time())
 
             timer.start()
-            # Densification
-            if iteration < opt.densify_until_iter :
+            # Densification自适应密度控制 + 优化器更新 + checkpoint 保存
+            if iteration < opt.densify_until_iter :# 动态分裂 “重要的高斯”、裁剪 “不重要的高斯”，让模型在细节处更密集。
                 # Keep track of max radii in image-space for pruning
                 gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                 gaussians.add_densification_stats(viewspace_point_tensor_grad, visibility_filter)
@@ -264,25 +277,27 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
                     if opt.reset_opacity_ratio > 0 and iteration % opt.pruning_interval == 0:
                         gaussians.reset_opacity(opt.reset_opacity_ratio)
 
-            # Optimizer step
+            # Optimizer step 优化器更新迭代参数
             if iteration < opt.iterations:
                 gaussians.optimizer.step()
                 gaussians.optimizer.zero_grad(set_to_none = True)
-
+  
             if (iteration in checkpoint_iterations):
                 print("\n[ITER {}] Saving Checkpoint".format(iteration))
                 torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
 
 
 def training(dataset, hyper, opt, pipe, testing_iterations, saving_iterations, checkpoint_iterations, checkpoint, debug_from, expname):
-    tb_writer = prepare_output_and_logger(expname)
-    gaussians = GaussianModel(dataset.sh_degree, hyper)
+    tb_writer = prepare_output_and_logger(expname)# 准备输出和日志记录器
+    gaussians = GaussianModel(dataset.sh_degree, hyper) # 高斯参数的初始化
     dataset.model_path = args.model_path
     timer = Timer()
+    # 场景初始化colmap数据读取，高斯椭球初始化
     scene = Scene(dataset, gaussians, shuffle=dataset.shuffle, loader=dataset.loader, duration=hyper.total_num_frames, opt=opt)
     timer.start()
     
     start_time = time()
+
     scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_iterations,
                          checkpoint_iterations, checkpoint, debug_from,
                          gaussians, scene, tb_writer, opt.iterations, timer, start_time)
@@ -321,6 +336,7 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     parser = ArgumentParser(description="Training script parameters")
     setup_seed(6666)
+    # 模型参数 优化参数 管道参数
     lp = ModelParams(parser)
     op = OptimizationParams(parser)
     pp = PipelineParams(parser)
@@ -346,7 +362,7 @@ if __name__ == "__main__":
         args = merge_hparams(args, config)
     print("Optimizing " + args.model_path)
 
-    # Initialize system state (RNG)
+    # Initialize system state (RNG)初始化系统状态
     safe_state(args.quiet)
 
     # Start GUI server, configure and run training
