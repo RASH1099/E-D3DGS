@@ -7,8 +7,8 @@ ModelHiddenParams = dict(
     defor_depth = 0,
     net_width = 128,
     no_ds = False,
-    no_do = True,
-    no_dc = True,
+    no_do = False,
+    no_dc = False,
     
     temporal_embedding_dim = 256,
     gaussian_embedding_dim = 32,
@@ -47,8 +47,8 @@ OptimizationParams = dict(
     rotation_lr = 0.001,
     # pruning_interval = 2000
     
-    scene_bbox_min = [-3.0, -1.8, -1.2],
-    scene_bbox_max = [3.0, 1.8, 1.2],
+    scene_bbox_min = [-7.0, -10.0, -5.0],
+    scene_bbox_max = [5.0, 2.0, 20.0],
     num_pts = 2000,
     threshold = 3,
     downsample = 1.0,
