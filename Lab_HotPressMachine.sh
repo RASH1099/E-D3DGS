@@ -1,9 +1,9 @@
-GPU=0
+GPU=2
 PORT_BASE=6001
 GT_PATH=/home/jiangzhenghan/project/Lab
 
 DATASET=Lab
-SAVE_PATH=output
+SAVE_PATH=output/new
 
 SCENE_LIST=(
     HotPressMachine

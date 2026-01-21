@@ -1,0 +1,59 @@
+========== RUN START: 2026-01-20 11:35:00 ==========
+BASE_DIR  : /home/jiangzhenghan/project/code/E-D3DGS_original
+SCRIPT_DIR: /home/jiangzhenghan/project/code/E-D3DGS_original
+LOG_DIR   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs
+Tue Jan 20 11:35:00 2026       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.183.01             Driver Version: 535.183.01   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX A5000               Off | 00000000:18:00.0 Off |                  Off |
+| 46%   73C    P2             221W / 230W |  12000MiB / 24564MiB |     96%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   1  NVIDIA RTX A5000               Off | 00000000:86:00.0 Off |                  Off |
+| 44%   70C    P2             200W / 230W |  11622MiB / 24564MiB |     96%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   2  NVIDIA RTX A5000               Off | 00000000:AF:00.0 Off |                  Off |
+| 30%   42C    P8              19W / 230W |      9MiB / 24564MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|    0   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
+|    0   N/A  N/A   3806203      C   python                                    11986MiB |
+|    1   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
+|    1   N/A  N/A   3809422      C   python                                    11608MiB |
+|    2   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
++---------------------------------------------------------------------------------------+
+Scripts:
+  - MeetingRoom_Bacon.sh
+  - MeetingRoom_DeliverIcePacks.sh
+  - MeetingRoom_EatIceCream.sh
+  - MeetingRoom_flare.sh
+  - MeetingRoom_HairDryer.sh
+  - MeetingRoom_HairDryerDark.sh
+  - MeetingRoom_IroningClothes.sh
+  - MeetingRoom_Laptop.sh
+  - MeetingRoom_LightTheCandles.sh
+  - MeetingRoom_MixMilk.sh
+  - MeetingRoom_PourHotWater.sh
+  - MeetingRoom_WhiteFoamCovers.sh
+=================================================
+
+===== START MeetingRoom_Bacon.sh @ 2026-01-20 11:35:00 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_Bacon.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_Bacon_20260120_113500.log
+===== END   MeetingRoom_Bacon.sh @ 2026-01-20 13:22:34 | exit=0 =====
+
+===== START MeetingRoom_DeliverIcePacks.sh @ 2026-01-20 13:22:34 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_DeliverIcePacks.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_DeliverIcePacks_20260120_113500.log

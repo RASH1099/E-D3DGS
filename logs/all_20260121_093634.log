@@ -1,0 +1,57 @@
+========== RUN START: 2026-01-21 09:36:34 ==========
+BASE_DIR  : /home/jiangzhenghan/project/code/E-D3DGS_original
+SCRIPT_DIR: /home/jiangzhenghan/project/code/E-D3DGS_original
+LOG_DIR   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs
+Wed Jan 21 09:36:34 2026       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.183.01             Driver Version: 535.183.01   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX A5000               Off | 00000000:18:00.0 Off |                  Off |
+| 30%   19C    P8              20W / 230W |      9MiB / 24564MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   1  NVIDIA RTX A5000               Off | 00000000:86:00.0 Off |                  Off |
+| 30%   21C    P8              21W / 230W |      9MiB / 24564MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   2  NVIDIA RTX A5000               Off | 00000000:AF:00.0 Off |                  Off |
+| 30%   53C    P2             204W / 230W |  10214MiB / 24564MiB |     82%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|    0   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
+|    1   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
+|    2   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
+|    2   N/A  N/A   2800998      C   python                                    10200MiB |
++---------------------------------------------------------------------------------------+
+Scripts:
+  - MeetingRoom_DeliverIcePacks.sh
+  - MeetingRoom_EatIceCream.sh
+  - MeetingRoom_flare.sh
+  - MeetingRoom_HairDryer.sh
+  - MeetingRoom_HairDryerDark.sh
+  - MeetingRoom_IroningClothes.sh
+  - MeetingRoom_Laptop.sh
+  - MeetingRoom_LightTheCandles.sh
+  - MeetingRoom_MixMilk.sh
+  - MeetingRoom_PourHotWater.sh
+  - MeetingRoom_WhiteFoamCovers.sh
+=================================================
+
+===== START MeetingRoom_DeliverIcePacks.sh @ 2026-01-21 09:36:34 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_DeliverIcePacks.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_DeliverIcePacks_20260121_093634.log
+===== END   MeetingRoom_DeliverIcePacks.sh @ 2026-01-21 09:36:37 | exit=120 =====
+
+===== START MeetingRoom_EatIceCream.sh @ 2026-01-21 09:36:37 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_EatIceCream.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_EatIceCream_20260121_093634.log

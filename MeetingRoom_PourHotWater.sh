@@ -1,9 +1,9 @@
-GPU=2
+GPU=0
 PORT_BASE=6001
 GT_PATH=/home/jiangzhenghan/project/MeetingRoom
 
 DATASET=MeetingRoom
-SAVE_PATH=output
+SAVE_PATH=output/new
 
 SCENE_LIST=(
     PourHotWater

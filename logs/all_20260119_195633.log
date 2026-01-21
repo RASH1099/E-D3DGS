@@ -1,0 +1,125 @@
+========== RUN START: 2026-01-19 19:56:33 ==========
+BASE_DIR  : /home/jiangzhenghan/project/code/E-D3DGS_original
+SCRIPT_DIR: /home/jiangzhenghan/project/code/E-D3DGS_original
+LOG_DIR   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs
+Mon Jan 19 19:56:33 2026       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.183.01             Driver Version: 535.183.01   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX A5000               Off | 00000000:18:00.0 Off |                  Off |
+| 30%   57C    P2             120W / 230W |  12910MiB / 24564MiB |     59%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   1  NVIDIA RTX A5000               Off | 00000000:86:00.0 Off |                  Off |
+| 30%   54C    P2              85W / 230W |  10118MiB / 24564MiB |     30%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+|   2  NVIDIA RTX A5000               Off | 00000000:AF:00.0 Off |                  Off |
+| 30%   35C    P8              17W / 230W |      9MiB / 24564MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|    0   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
+|    0   N/A  N/A   1092933      C   python                                    12896MiB |
+|    1   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
+|    1   N/A  N/A   1932547      C   python                                    10104MiB |
+|    2   N/A  N/A      2062      G   /usr/lib/xorg/Xorg                            4MiB |
++---------------------------------------------------------------------------------------+
+Scripts:
+  - Lab_Heatingable.sh
+  - Lab_HotPressMachine.sh
+  - Lab_Hotwind.sh
+  - MeetingRoom_Bacon.sh
+  - MeetingRoom_DeliverIcePacks.sh
+  - MeetingRoom_EatIceCream.sh
+  - MeetingRoom_flare.sh
+  - MeetingRoom_HairDryer.sh
+  - MeetingRoom_HairDryerDark.sh
+  - MeetingRoom_IroningClothes.sh
+  - MeetingRoom_Laptop.sh
+  - MeetingRoom_LightTheCandles.sh
+  - MeetingRoom_MixMilk.sh
+  - MeetingRoom_PourHotWater.sh
+  - MeetingRoom_WhiteFoamCovers.sh
+=================================================
+
+===== START Lab_Heatingable.sh @ 2026-01-19 19:56:33 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/Lab_Heatingable.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/Lab_Heatingable_20260119_195633.log
+===== END   Lab_Heatingable.sh @ 2026-01-19 21:40:24 | exit=0 =====
+
+===== START Lab_HotPressMachine.sh @ 2026-01-19 21:40:24 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/Lab_HotPressMachine.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/Lab_HotPressMachine_20260119_195633.log
+===== END   Lab_HotPressMachine.sh @ 2026-01-19 23:30:27 | exit=0 =====
+
+===== START Lab_Hotwind.sh @ 2026-01-19 23:30:27 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/Lab_Hotwind.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/Lab_Hotwind_20260119_195633.log
+===== END   Lab_Hotwind.sh @ 2026-01-20 00:29:58 | exit=120 =====
+
+===== START MeetingRoom_Bacon.sh @ 2026-01-20 00:29:58 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_Bacon.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_Bacon_20260119_195633.log
+===== END   MeetingRoom_Bacon.sh @ 2026-01-20 00:30:25 | exit=120 =====
+
+===== START MeetingRoom_DeliverIcePacks.sh @ 2026-01-20 00:30:25 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_DeliverIcePacks.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_DeliverIcePacks_20260119_195633.log
+===== END   MeetingRoom_DeliverIcePacks.sh @ 2026-01-20 00:30:52 | exit=120 =====
+
+===== START MeetingRoom_EatIceCream.sh @ 2026-01-20 00:30:52 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_EatIceCream.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_EatIceCream_20260119_195633.log
+===== END   MeetingRoom_EatIceCream.sh @ 2026-01-20 00:31:19 | exit=120 =====
+
+===== START MeetingRoom_flare.sh @ 2026-01-20 00:31:19 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_flare.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_flare_20260119_195633.log
+===== END   MeetingRoom_flare.sh @ 2026-01-20 00:31:46 | exit=120 =====
+
+===== START MeetingRoom_HairDryer.sh @ 2026-01-20 00:31:46 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_HairDryer.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_HairDryer_20260119_195633.log
+===== END   MeetingRoom_HairDryer.sh @ 2026-01-20 00:32:13 | exit=120 =====
+
+===== START MeetingRoom_HairDryerDark.sh @ 2026-01-20 00:32:13 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_HairDryerDark.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_HairDryerDark_20260119_195633.log
+===== END   MeetingRoom_HairDryerDark.sh @ 2026-01-20 00:32:41 | exit=120 =====
+
+===== START MeetingRoom_IroningClothes.sh @ 2026-01-20 00:32:41 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_IroningClothes.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_IroningClothes_20260119_195633.log
+===== END   MeetingRoom_IroningClothes.sh @ 2026-01-20 00:33:07 | exit=120 =====
+
+===== START MeetingRoom_Laptop.sh @ 2026-01-20 00:33:07 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_Laptop.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_Laptop_20260119_195633.log
+===== END   MeetingRoom_Laptop.sh @ 2026-01-20 00:33:34 | exit=120 =====
+
+===== START MeetingRoom_LightTheCandles.sh @ 2026-01-20 00:33:34 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_LightTheCandles.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_LightTheCandles_20260119_195633.log
+===== END   MeetingRoom_LightTheCandles.sh @ 2026-01-20 00:34:01 | exit=120 =====
+
+===== START MeetingRoom_MixMilk.sh @ 2026-01-20 00:34:01 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_MixMilk.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_MixMilk_20260119_195633.log
+===== END   MeetingRoom_MixMilk.sh @ 2026-01-20 00:34:28 | exit=120 =====
+
+===== START MeetingRoom_PourHotWater.sh @ 2026-01-20 00:34:28 =====
+Script: /home/jiangzhenghan/project/code/E-D3DGS_original/MeetingRoom_PourHotWater.sh
+Log   : /home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_PourHotWater_20260119_195633.log
+===== END   MeetingRoom_PourHotWater.sh @ 2026-01-20 00:34:55 | exit=120 =====
+
+===== START MeetingRoom_WhiteFoamC
