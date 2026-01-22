@@ -7,12 +7,7 @@ LOG_DIR="${BASE_DIR}/logs"
 mkdir -p "$LOG_DIR"
 
 SCRIPTS=(
-  "MeetingRoom_HairDryer.sh"
-  "MeetingRoom_HairDryerDark.sh"
-  "MeetingRoom_IroningClothes.sh"
-  "MeetingRoom_Laptop.sh"
   "MeetingRoom_LightTheCandles.sh"
-  "MeetingRoom_MixMilk.sh"
 )
 
 stamp="$(date '+%Y%m%d_%H%M%S')"

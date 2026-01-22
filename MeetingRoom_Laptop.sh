@@ -1,4 +1,4 @@
-GPU=1
+GPU=2
 PORT_BASE=6001
 GT_PATH=/home/jiangzhenghan/project/MeetingRoom
 

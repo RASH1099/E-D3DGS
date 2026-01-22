@@ -2,3 +2,6 @@ script,start_time,end_time,exit_code,log_file
 MeetingRoom_DeliverIcePacks.sh,2026-01-21 09:37:10,2026-01-21 11:36:58,0,/home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_DeliverIcePacks_20260121_093709.log
 MeetingRoom_EatIceCream.sh,2026-01-21 11:36:58,2026-01-21 13:27:19,0,/home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_EatIceCream_20260121_093709.log
 MeetingRoom_flare.sh,2026-01-21 13:27:19,2026-01-21 15:24:17,0,/home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_flare_20260121_093709.log
+MeetingRoom_HairDryer.sh,2026-01-21 15:24:17,2026-01-21 17:46:50,0,/home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_HairDryer_20260121_093709.log
+MeetingRoom_HairDryerDark.sh,2026-01-21 17:46:50,2026-01-21 18:58:52,0,/home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_HairDryerDark_20260121_093709.log
+MeetingRoom_IroningClothes.sh,2026-01-21 18:58:52,2026-01-21 21:00:01,0,/home/jiangzhenghan/project/code/E-D3DGS_original/logs/MeetingRoom_IroningClothes_20260121_093709.log
